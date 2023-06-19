@@ -5,6 +5,9 @@ import PyPDF2
 import docx
 from audiorecorder import audiorecorder
 from io import BytesIO
+import tempfile
+import os
+import requests
 
 # Import of internal libraries
 from functions.help_env import find_env_file, load_env_file
@@ -84,8 +87,25 @@ def demo_site():
                     audio = audiorecorder("Click to record", "Recording...")
                     if len(audio) > 0:
                         st.audio(audio.tobytes())
+
+                        # Create a temporary file
+                        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
+                            # Write the audio data to the temporary file
+                            tmp.write(audio.tobytes())
+                            tmp_file_name = tmp.name
+
+                        with open(tmp_file_name, 'rb') as tmp:
+                            # Send the temporary file to the FastAPI endpoint
+                            files = {"file": tmp}
+                            response = requests.post("http://localhost:8000/api/sound2text/", files=files)
+
+                        # Display the response from the FastAPI endpoint
                         text_input_value_bool = True
-                        # TODO: Implement the function Audio Request to Backend
+                        if response.status_code == 200:
+                            text_input_value = response.text
+                        else:
+                            text_input_value = "Error: " + str(response.status_code) + " - " + response.text
+
 
     # 3. Row: Input & Output Column
     row_3_col_1, row_3_col_2 = st.columns(2)

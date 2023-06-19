@@ -7,6 +7,7 @@
 import os
 import requests
 import websocket
+import streamlit as st
 
 # Loading of Custom Modules
 from functions.help_env import load_env_file
@@ -31,6 +32,7 @@ def build_url_rest_api() -> str:
 
 
 # Function to send a request to the REST API
+
 def send_request_rest_api(request_type: str, request_data: dict = None, api_path: str = "") -> dict:
     """
     This function sends a request to the REST API.
