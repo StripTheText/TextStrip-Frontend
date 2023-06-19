@@ -1,28 +1,31 @@
 # Imports for the Streamlit app
-
 import streamlit as st
 import pyperclip
+import PyPDF2
+import docx
 from audiorecorder import audiorecorder
 from io import BytesIO
-from functions.file_handling import read_docx, read_pdf, read_mp3
-from functions.audio2text import fun_audio_to_text
+
+# Import of internal libraries
+from functions.help_env import find_env_file, load_env_file
+from functions.S2C_Communication import build_url_rest_api, send_request_rest_api
 
 
 # Definition of the Layout of the Streamlit app
-def app():
+def demo_site():
     """
     Input column for the app (Text, Text Area, File Upload, Microphone, Text Compression Rate, etc.)
-    :return:
     """
+    # Configuration of the Streamlit site
+    st.set_page_config(
+        layout="wide",
+        page_title="Strip the Text - Demo",
+        page_icon="🧊",
+        initial_sidebar_state="collapsed")
+
     # Definition of Constants
     text_input_value_bool: bool = False
     text_input_value: str = ""
-
-    st.set_page_config(
-        layout="wide",
-        page_title="Strip The Text App",
-        page_icon="🧊",
-        initial_sidebar_state="collapsed")
 
     # 1. Row: Title
     row_1_container = st.container()
@@ -36,12 +39,12 @@ def app():
         row_2_col_1, row_2_col_2 = st.columns([0.3, 0.7], gap="large")
         with row_2_col_1:
             # Slider for the text compression rate
-            text_compression_rate = st.slider("Text Compression Rate", .0, 1.0, .50, .1)
+            pass
+
         with row_2_col_2:
             row_2_col_2_1, row_2_col_2_2 = st.columns(2, gap="small")
 
             with row_2_col_2_1:
-                # Radio button for the input type
                 input_type = st.radio(
                     "Input Type",
                     ('Text Area', 'File Upload', 'Microphone'),
@@ -63,11 +66,17 @@ def app():
                         if file_in.type == "text/plain":
                             val = file_in.read().decode('utf-8')
                         elif file_in.type == "application/pdf":
-                            val = read_pdf()
+                            pass
+                            # TODO: Implement the function to read pdf Files
                         elif file_in.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-                            val = read_docx(BytesIO(file_in.read()))
+                            with file_in as f:
+                                doc = docx.Document(BytesIO(f.read()))
+                                for para in doc.paragraphs:
+                                    val += para.text
+                            # TODO: Implement the function to read docx Files
                         elif file_in.type == "audio/mpeg":
-                            val = read_mp3()
+                            pass
+                            # TODO: Implement the function Audio Request to Backend
                         text_input_value_bool = True
                         text_input_value = val
 
@@ -76,15 +85,17 @@ def app():
                     if len(audio) > 0:
                         st.audio(audio.tobytes())
                         text_input_value_bool = True
-                        text_input_value = fun_audio_to_text(audio)
-        pass
+                        # TODO: Implement the function Audio Request to Backend
+
     # 3. Row: Input & Output Column
     row_3_col_1, row_3_col_2 = st.columns(2)
 
-    with row_3_col_1:  # Input Column
+    # 3.1. Row: Input Column (Text-Label)
+    with row_3_col_1:
         st.header("Input for the App")
 
-    with row_3_col_2:  # Output Column
+    # 3.2. Row: Output Column (Classification)
+    with row_3_col_2:
         st.header("Output of the App")
         txt_class = st.text_input(
             'Classification of the text',
@@ -93,22 +104,27 @@ def app():
             disabled=True
         )
 
-    # 4. Row: Text-Fields
+    # 4. Row: Input & Output Column (Text-Fields)
     row_4_col_1, row_4_col_2 = st.columns(2)
 
-    with row_4_col_1:  # Input Column
+    # 4.1. Row: Input Column (Text-Field)
+    with row_4_col_1:
         if text_input_value_bool:
             text_input_value = st.text_area('Original Text', key="text_input_value_field", height=500,
                                             value=text_input_value)
 
-    with row_4_col_2:  # Output Column
+    # 4.2. Row: Output Column (Text-Field)
+    with row_4_col_2:
         txt_summ = st.text_area('Summary of the text', key="text_output_field_key", height=500)
 
-    # 5. Row: Buttons
+    # 5. Row: Control Buttons
     row_5_col_1, row_5_col_2 = st.columns(2)
 
+    # 5.1. Row: Control Buttons (Under Input Column)
     with row_5_col_1:
         col_5_1, col_5_2, col_5_3 = st.columns(3)
+
+        # 5.1.1: Select Operation Mode
         with col_5_1:
             operation = st.selectbox(
                 label="Which operation should be run?",
@@ -116,19 +132,17 @@ def app():
                 key="operation",
                 label_visibility="collapsed",
             )
+
+        # 5.1.2: Start Classification or Summarization
         with col_5_2:
             go_action = st.button(
                 label="Go!",
                 key="action",
                 use_container_width=True,
             )
-            if go_action and (text_input_value != "" or None):
-                if operation == "Text Classification":
-                    pass  # Pipeline
-                elif operation == "Text Summarization":
-                    pass  # Pipeline
-                elif operation == "Text Classification & Summarization":
-                    pass  # Pipeline
+            # TODO: Add functionality to the button
+
+        # 5.1.3: Clear Input
         with col_5_3:
             st.button(
                 label="Clear Input",
@@ -137,8 +151,11 @@ def app():
                 on_click=clear_input
             )
 
+    # 5.2. Row: Control Buttons (Under Output Column)
     with row_5_col_2:
         col_5_a, col_5_b, col_5_c = st.columns(3)
+
+        # 5.2.1: Copy Output
         with col_5_a:
             st.button(
                 label="Copy to Clipboard",
@@ -146,6 +163,8 @@ def app():
                 use_container_width=True,
                 on_click=pyperclip.copy(text=txt_summ)
             )
+
+        # 5.2.2: Clear Input and Output
         with col_5_b:
             st.button(
                 label="Clear Input and Output Field",
@@ -153,6 +172,8 @@ def app():
                 use_container_width=True,
                 on_click=clear_all
             )
+
+        # 5.2.3: Download Output
         with col_5_c:
             st.download_button(
                 label="Download Result as .txt",
@@ -163,6 +184,7 @@ def app():
             )
 
 
+# Helper Function for the Demo
 def clear_input():
     st.session_state["text_input_value_field"] = ""
 
@@ -173,4 +195,4 @@ def clear_all():
     st.session_state["text_output_field_key"] = ""
 
 
-app()
+demo_site()

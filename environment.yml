@@ -14,3 +14,4 @@ dependencies:
       - streamlit
       - streamlit-audiorecorder
       - websocket
+      - PyPDF2

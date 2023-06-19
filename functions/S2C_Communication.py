@@ -9,7 +9,7 @@ import requests
 import websocket
 
 # Loading of Custom Modules
-from ..functions.help_env import load_env_file, find_env_file
+from functions.help_env import load_env_file
 
 
 # Function to build the URL for the REST API
@@ -22,65 +22,29 @@ def build_url_rest_api() -> str:
     load_env_file()
 
     # Get the required environment variables
-    SERVER_BASE_URL = os.getenv("SERVER_BASE_URL")
-    ENDPOINT_API = os.getenv("SERVER_API_DYN_URL")
-
-    # Build the URL
-    url_api = f"{SERVER_BASE_URL}/{ENDPOINT_API}"
+    SERVER_HOST = os.getenv("SERVER_HOST")
+    SERVER_PORT = os.getenv("SERVER_PORT")
+    API_ENTRYPOINT = os.getenv("API_ENTRYPOINT")
 
     # Return the URL
-    return url_api
-
-
-# Function to build the URL for the Websocket
-def build_url_websocket() -> str:
-    """
-    This function builds the URL for the Websocket.
-    :return: URL for the Websocket
-    """
-    # Load the environment variables
-    load_env_file()
-
-    # Get the required environment variables
-    SERVER_BASE_URL = os.getenv("SERVER_BASE_URL")
-    ENDPOINT_WEBSOCKET = os.getenv("SERVER_WEBSOCKET_DYN_URL")
-
-    # Build the URL
-    url_websocket = f"{SERVER_BASE_URL}/{ENDPOINT_WEBSOCKET}"
-
-    # Return the URL
-    return url_websocket
+    return f"https://{SERVER_HOST}:{SERVER_PORT}/{API_ENTRYPOINT}/"
 
 
 # Function to send a request to the REST API
-def send_request_rest_api(request_type: str, request_data: dict = None) -> dict:
+def send_request_rest_api(request_type: str, request_data: dict = None, api_path: str = "") -> dict:
     """
     This function sends a request to the REST API.
     :param request_type: Type of the request
     :param request_data: Data of the request
+    :param api_path: Path of the API
     :return: Response of the request
     """
     # Build the URL
-    url_api = build_url_rest_api()
+    url_api_base = build_url_rest_api()
+    url_api = url_api_base + api_path
 
     # Send the request
     response = requests.request(request_type, url_api, json=request_data)
 
     # Return the response
     return response.json()
-
-
-# Function to connect to the Websocket
-def connect_websocket() -> websocket.WebSocket:
-    """
-    This function connects to the Websocket.
-    :return: Websocket
-    """
-    # Build the URL
-    url_websocket = build_url_websocket()
-
-    # Connect to the Websocket
-    ws = websocket.create_connection(url_websocket)
-
-    # Return the Websocket
-    return ws
