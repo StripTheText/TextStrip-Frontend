@@ -1,0 +1,9 @@
+openai-whisper
+python-dotenv
+pyperclip
+python-docx
+requests
+streamlit
+streamlit-audiorecorder
+websocket
+PyPDF2

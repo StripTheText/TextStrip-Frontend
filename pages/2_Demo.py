@@ -1,4 +1,7 @@
 # Imports for the Streamlit app
+import asyncio
+import json
+
 import streamlit as st
 import pyperclip
 import PyPDF2
@@ -7,11 +10,9 @@ from audiorecorder import audiorecorder
 from io import BytesIO
 import tempfile
 import os
+import pathlib
+import whisper
 import requests
-
-# Import of internal libraries
-from functions.help_env import find_env_file, load_env_file
-from functions.S2C_Communication import build_url_rest_api, send_request_rest_api
 
 
 # Definition of the Layout of the Streamlit app
@@ -30,6 +31,13 @@ def demo_site():
     text_input_value_bool: bool = False
     text_input_value: str = ""
 
+    # Defition Session State
+    if 'class_output_field_key' not in st.session_state:
+        st.session_state['class_output_field_key'] = ""
+
+    if 'summary' not in st.session_state:
+        st.session_state['summary'] = ""
+
     # 1. Row: Title
     row_1_container = st.container()
     with row_1_container:
@@ -42,7 +50,7 @@ def demo_site():
         row_2_col_1, row_2_col_2 = st.columns([0.3, 0.7], gap="large")
         with row_2_col_1:
             # Slider for the text compression rate
-            pass
+            text_compression_rate = st.slider("Text Compression Rate", .0, 1.0, .50, .1)
 
         with row_2_col_2:
             row_2_col_2_1, row_2_col_2_2 = st.columns(2, gap="small")
@@ -87,25 +95,8 @@ def demo_site():
                     audio = audiorecorder("Click to record", "Recording...")
                     if len(audio) > 0:
                         st.audio(audio.tobytes())
-
-                        # Create a temporary file
-                        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
-                            # Write the audio data to the temporary file
-                            tmp.write(audio.tobytes())
-                            tmp_file_name = tmp.name
-
-                        with open(tmp_file_name, 'rb') as tmp:
-                            # Send the temporary file to the FastAPI endpoint
-                            files = {"file": tmp}
-                            response = requests.post("http://localhost:8000/api/sound2text/", files=files)
-
-                        # Display the response from the FastAPI endpoint
                         text_input_value_bool = True
-                        if response.status_code == 200:
-                            text_input_value = response.text
-                        else:
-                            text_input_value = "Error: " + str(response.status_code) + " - " + response.text
-
+                        text_input_value = audio2text(audio)
 
     # 3. Row: Input & Output Column
     row_3_col_1, row_3_col_2 = st.columns(2)
@@ -120,7 +111,7 @@ def demo_site():
         txt_class = st.text_input(
             'Classification of the text',
             key="class_output_field_key",
-            value="",
+            value=st.session_state['class'],
             disabled=True
         )
 
@@ -135,7 +126,8 @@ def demo_site():
 
     # 4.2. Row: Output Column (Text-Field)
     with row_4_col_2:
-        txt_summ = st.text_area('Summary of the text', key="text_output_field_key", height=500)
+        txt_summ = st.text_area('Summary of the text', key="text_output_field_key", height=500,
+                                value=st.session_state['summary'])
 
     # 5. Row: Control Buttons
     row_5_col_1, row_5_col_2 = st.columns(2)
@@ -161,7 +153,24 @@ def demo_site():
                 use_container_width=True,
             )
             # TODO: Add functionality to the button
-
+            if go_action:
+                result_class, result_summ = None, None
+                if operation == "Text Classification":
+                    result_class = asyncio.run(classify_text(text_input_value))
+                elif operation == "Text Summarization":
+                    result_summ = asyncio.run(summarize_text(text_compression_rate, text_input_value))
+                elif operation == "Text Classification & Summarization":
+                    result_class = asyncio.run(classify_text(text_input_value))
+                    result_summ = asyncio.run(summarize_text(text_compression_rate, text_input_value))
+                if result_class is not None:
+                    if result_class.status_code == 200:
+                        data = result_class.json()
+                        st.session_state['class'] = data['outputClass']
+                        # Update the text field
+                if result_summ is not None:
+                    if result_summ.status_code == 200:
+                        data = result_summ.json()
+                        st.session_state['summary'] = data['summary']
         # 5.1.3: Clear Input
         with col_5_3:
             st.button(
@@ -211,8 +220,59 @@ def clear_input():
 
 def clear_all():
     st.session_state["text_input_value_field"] = ""
-    st.session_state["class_output_field_key"] = ""
-    st.session_state["text_output_field_key"] = ""
+    st.session_state["class"] = ""
+    st.session_state["summary"] = ""
+
+
+# Define the function to convert audio to text
+@st.cache_data
+def audio2text(
+        audio2transcript: audiorecorder = None) -> str:
+    """
+    Function to convert audio to text using the Open AI-Whisper Model
+    :param audio2transcript: Audio which needs to be transcribed
+    :return: str: Transcribed text
+    """
+    # Download the Open AI-Whisper Model
+    whisper_model = whisper.load_model(
+        name="base.en",
+        download_root=str(pathlib.Path.joinpath(pathlib.Path.cwd(), "models", "whisper")),
+        in_memory=False
+    )
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as fp:
+        fp.write(audio2transcript.tobytes())
+        temp_filename = fp.name
+
+    result = whisper_model.transcribe(audio=temp_filename)
+
+    os.remove(temp_filename)
+
+    # Return the result of the transcription
+    if result["text"] is not None:
+        return result["text"]
+    else:
+        return "Warning: No text found in the audio file!"
+
+
+async def classify_text(input_text: str):
+    """
+    Function to classify the input text
+    :param input_text: Text which needs to be classified
+    :return: JSON-Object with the classification result
+    """
+    return requests.post(url="http://localhost:8000/api/classifier/",
+                         data=json.dumps({"text": input_text}))
+
+
+async def summarize_text(compression_rate: float, input_text: str):
+    """
+    Function to summarize the input text
+    :param compression_rate: Compression rate for the summarization
+    :param input_text: Text which needs to be summarized
+    :return: JSON-Object with the summarization result
+    """
+    return requests.post(url="http://localhost:8000/api/summarizer/",
+                         data=json.dumps({"compression_rate": compression_rate, "text": input_text}))
 
 
 demo_site()
