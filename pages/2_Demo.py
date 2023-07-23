@@ -32,8 +32,8 @@ def demo_site():
     text_input_value: str = ""
 
     # Defition Session State
-    if 'class_output_field_key' not in st.session_state:
-        st.session_state['class_output_field_key'] = ""
+    if 'class' not in st.session_state:
+        st.session_state['class'] = ""
 
     if 'summary' not in st.session_state:
         st.session_state['summary'] = ""
@@ -186,12 +186,13 @@ def demo_site():
 
         # 5.2.1: Copy Output
         with col_5_a:
-            st.button(
-                label="Copy to Clipboard",
-                key="copy_clipboard",
-                use_container_width=True,
-                on_click=pyperclip.copy(text=txt_summ)
-            )
+            # st.button(
+            #    label="Copy to Clipboard",
+            #    key="copy_clipboard",
+            #    use_container_width=True,
+            #    on_click=pyperclip.copy(text=txt_summ)
+            #)
+            pass
 
         # 5.2.2: Clear Input and Output
         with col_5_b:
