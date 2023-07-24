@@ -40,16 +40,15 @@ terminal directory. The project is now located in this folder. The structure of 
 |  |- requirements.txt
 ```
 
-The **functions** folder contains all supporting functions that arise during the execution of the project. The **models
-** folder contains all trained models, which are needed on the different pages (**pages**). A detailed guide on how to
+The **functions** folder contains all supporting functions that arise during the execution of the project. The **models** 
+folder contains all trained models, which are needed on the different pages (**pages**). A detailed guide on how to
 use it can be found on the Pages - Handbook page once the app is running.
 
 ### Installing the Project Dependencies
 
 Before you can run the project, the project's dependencies must first be installed. There are the following options for
-this: **[pip](https://pip.pypa.io/en/stable/)**, **[conda](https://docs.conda.io/en/latest/)** and *
-*[venv](https://docs.python.org/3/library/venv.html)**. All three options are described below, but require an installed
-version of Python (This project was developed with Python 3.11.*). If there is no suitable version of Python installed
+this: **[pip](https://pip.pypa.io/en/stable/)**, **[conda](https://docs.conda.io/en/latest/)** and **[venv](https://docs.python.org/3/library/venv.html)**. All three options are described below, but require an installed
+version of Python (This project was developed with Python 3.11.*). If there is no suitable version of Python installed,
 yet, it can be downloaded from the official **[Python website](https://www.python.org/downloads/)**.
 
 **Note:** In addition to the project's dependencies, there are other dependencies defined by the operating system.
@@ -150,7 +149,7 @@ After successfully pulling the image, you can run the container with the followi
 docker run -p 8501:8501 tkister/strip_the_text_frontend
 ```
 
-The `-p` option maps the port 8501 in the container to port 8501 on your local machine, which is the default port for
+The `-p` option maps port 8501 in the container to port 8501 on your local machine, which is the default port for
 Streamlit applications.
 
 Now, you should be able to access the Streamlit application in your web browser at `http://localhost:8501`.
