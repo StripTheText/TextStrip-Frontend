@@ -15,11 +15,11 @@ COPY . .
 RUN pip install -r requirements.txt
 
 # Exponieren Sie den Port, auf dem Streamlit läuft
-EXPOSE 8501
+EXPOSE 80
 
 # Führen Sie Streamlit aus, wenn der Container gestartet wird
-HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health
+HEALTHCHECK CMD curl --fail http://localhost:80/_stcore/health
 
 # Wie soll der Container gestartet werden?
-ENTRYPOINT ["streamlit", "run", "Introduction.py", "--server.port=8501", "--server.address=0.0.0.0"]
+ENTRYPOINT ["streamlit", "run", "Introduction.py", "--server.port=80", "--server.address=0.0.0.0"]
 
