@@ -14,6 +14,10 @@ COPY . .
 # Installieren Sie die benötigten Python-Pakete
 RUN pip install -r requirements.txt
 
+# Setzen Sie die Umgebungsvariable für den API-Host
+ARG API_HOST_NAME
+ENV API_HOST_NAME=${API_HOST_NAME}
+
 # Exponieren Sie den Port, auf dem Streamlit läuft
 EXPOSE 80
 

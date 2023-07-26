@@ -17,10 +17,10 @@ def app():
     ## Ein Universitätsprojekt von Studierenden der Dualen Hochschule Baden-Württemberg Mannheim
 
     ### Projektteam:
-    - [**Daniel Schmitz - **]()
-    - [**Tobias Kister - 9416513**](contact@tksiter.de)
-    - [**Jan Neilfeld - **]()
-    - [**Michel Medved - **]()
+    - [Tobias Kister - 9416513](https://github.com/tkister)
+    - [Daniel Schmitz - 6695185](https://github.com/dschmtz)
+    - [Jan Neifeld - 8722662](https://github.com/JanDN312)
+    - [Michel Medved - 9303634](https://github.com/mimed100)
 
     ### Projektbeschreibung: 
 

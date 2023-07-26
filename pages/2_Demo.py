@@ -14,6 +14,9 @@ import pathlib
 import whisper
 import requests
 
+# Get API-Host-Address
+API_HOST = os.environ.get('API_HOST_NAME')
+
 
 # Definition of the Layout of the Streamlit app
 def demo_site():
@@ -262,16 +265,16 @@ def audio2text(
 
 
 async def classify_text(input_text: str):
-    return requests.post(url="http://localhost:8080/api/classifier/",
+    return requests.post(url=f"http://{API_HOST}:8080/api/classifier/",
                          data=json.dumps({"text": input_text}))
 
 
 async def summarize_text(compression_rate: float, input_text: str):
     if compression_rate <= 0.3:
-        return requests.post(url="http://localhost:8080/api/summarizer/",
+        return requests.post(url=f"http://{API_HOST}:8080/api/summarizer/",
                              data=json.dumps({"compression_rate": compression_rate, "text": input_text}))
     else:
-        return requests.post(url="http://localhost:8080/api/summarizer/compress",
+        return requests.post(url=f"http://{API_HOST}:8080/api/summarizer/compress",
                              data=json.dumps({"compression_rate": compression_rate, "text": input_text}))
 
 
