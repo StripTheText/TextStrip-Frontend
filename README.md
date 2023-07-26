@@ -146,11 +146,11 @@ docker pull tkister/strip_the_text_frontend
 After successfully pulling the image, you can run the container with the following command:
 
 ```shell
-docker run -p 8501:8501 tkister/strip_the_text_frontend
+docker run -p 80:80 tkister/strip_the_text_frontend
 ```
 
-The `-p` option maps port 8501 in the container to port 8501 on your local machine, which is the default port for
-Streamlit applications.
+The `-p` option maps port 80 in the container to port 80 on your local machine, which is the default port for
+Streamlit applications and all other Websites.
 
 Now, you should be able to access the Streamlit application in your web browser at `http://localhost:8501`.
 
